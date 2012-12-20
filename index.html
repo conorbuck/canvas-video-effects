@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>WebCam Effects</title>
+</head>
+<body>
+				
+	<video id="video-stream" style="display:none;" width=545 height=344></video>
+	<canvas id="canvas-video" width=545 height=344></canvas>
+	<canvas id="canvas-effects" width=545 height=344></canvas>
+
+	<script type="text/javascript">
+		(function(){
+			var video = document.getElementById('video-stream'),
+				canvas = document.getElementById('canvas-video'),
+				canvasEffect = document.getElementById('canvas-effects'),
+				ctx = canvas.getContext('2d'),
+				ctxEffects = canvasEffect.getContext('2d'),
+				processor = new Worker('image-worker.js');
+				w = video.width,
+				h = video.height;
+
+
+			/* Setup WebWorker messaging */
+			processor.onmessage = function(event){
+				ctxEffects.putImageData(event.data.dstData, 0, 0);
+			};
+
+			/* Setup video stream and canvas */
+			navigator.getUserMedia =
+				navigator.getUserMedia ||
+				navigator.webkitGetUserMedia ||
+				navigator.mozGetUserMedia ||
+				navigator.msGetUserMedia;
+
+			navigator.getUserMedia({video:true}, function(stream){
+				video.src = URL.createObjectURL(stream);
+				video.play();
+				setInterval(render, 10);
+			});
+
+			var render = function(){
+				ctx.drawImage(video, 0, 0, w, h);
+				var srcData = ctx.getImageData(0,0,w,h);
+
+				processor.postMessage({
+					imageData: srcData
+				});
+			};
+		})();
+	</script>
+
+</body>
+</html>
