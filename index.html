@@ -37,6 +37,8 @@
 				video.src = URL.createObjectURL(stream);
 				video.play();
 				setInterval(render, 10);
+			}, function(error){
+				console.log('error', error);
 			});
 
 			var render = function(){
